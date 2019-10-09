@@ -56,7 +56,11 @@ class Game {
         player.pos.y += player.vel.y * dt;
 
         if(player.pos.y > this.canvasheight){
-            console.log("Player " + player.id + " Loses");
+            player.score --;
+            this.player1.score ++;
+            this.player2.score ++;
+            player.pos.x = player.initialpos.x;
+            player.pos.y = player.initialpos.y;
         }
 
 
@@ -92,11 +96,13 @@ class Player{
             x: x,
             y: y
         };
+        this.initialpos = { x: x, y: y };
 
         this.id = id;
         this.width = width;
         this.height = width;
         this.maxspeed = 10;
+        this.score = 0;
 
         this.vel = {
             x: 0,
@@ -165,6 +171,12 @@ class GameView{
     drawBackground(){
         this.ctx.fillStyle = "black";
         this.ctx.fillRect(0, 0, this.canvasWidth, this.canvasHeight);
+
+        this.ctx.font = "30px Arial";
+        this.ctx.fillStyle = this.game.player1.color;
+        this.ctx.fillText(this.game.player1.score, 670, 100);
+        this.ctx.fillStyle = this.game.player2.color;
+        this.ctx.fillText(this.game.player2.score, 100, 100);
     }
 
     draw(){
