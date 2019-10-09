@@ -1,0 +1,18 @@
+html, body {
+  height: 100%;
+  box-sizing: border-box;
+  margin: 0px;
+}
+
+body{
+    background-color: aliceblue;
+    padding: 8px;
+}
+
+.gameContainer{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    width: 100%;
+}
