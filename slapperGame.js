@@ -2,12 +2,15 @@ class Game {
     constructor(canvasheight, canvaswidth) {
         this.canvasheight = canvasheight;
         this.canvaswidth = canvaswidth;
-        this.playerWidth = 30;
-        this.player1 = new Player(canvaswidth - 180, 350, 1, this.playerWidth);
-        this.player2 = new Player(150, 350, 2, this.playerWidth, "lightblue");
+        this.playerWidth = 44;
+        this.playerHeight = 66;
+        this.player1 = new Player(canvaswidth - 180, 350, 1, this.playerWidth, this.playerHeight);
+        this.player2 = new Player(150, 350, 2, this.playerWidth, this.playerHeight, "lightblue");
         this.platforms = [new Platform(100, 500, 600, 50)];
         this.friction = 0.85;
         this.gravity = 0.3;
+        this.bumpSound = new Audio('./soundfx/pop.wav');
+
 
     }
 
@@ -19,7 +22,7 @@ class Game {
         let avectorx = Math.abs(vectorx);
         let avectory = Math.abs(vectory);
         if(avectorx < minwidth && avectory < minheight){
-            player.pos.y = platform.pos.y - player.height;
+            player.pos.y = Math.floor(platform.pos.y - player.height);
             if(player.vel.y > 0){
                 player.vel.y = 0;
                 player.airborne = false;
@@ -33,6 +36,7 @@ class Game {
             player1.pos.y < player2.pos.y + player2.height &&
             player2.pos.y < player1.pos.y + player1.height
         ) {
+            this.bumpSound.play();
             if(player1.pos.x > player2.pos.x){
                 //player1 on right side
                 player1.pos.x += (player1.pos.x - player2.pos.x) / 2;
@@ -68,14 +72,16 @@ class Game {
 
 
     updatePos(dt) {
+        this.updatePlayerPos(this.player1, dt);
+        this.updatePlayerPos(this.player2, dt);
+
         this.platforms.forEach(platform =>{
             this.platformColision(platform, this.player1);
             this.platformColision(platform, this.player2);
         });
 
         this.playerColision(this.player1, this.player2);
-        this.updatePlayerPos(this.player1, dt);
-        this.updatePlayerPos(this.player2, dt);
+
     }
 
 }
@@ -91,16 +97,17 @@ class Platform{
 
 
 class Player{
-    constructor(x, y, id, width, color = "blue") {
+    constructor(x, y, id, width, height, color = "blue") {
         this.pos = {
             x: x,
             y: y
         };
+        this.direction = "right"
         this.initialpos = { x: x, y: y };
 
         this.id = id;
         this.width = width;
-        this.height = width;
+        this.height = height;
         this.maxspeed = 10;
         this.score = 0;
 
@@ -123,12 +130,14 @@ class Player{
         if (this.vel.x < this.maxspeed) {
             this.vel.x += 1;
         }
+        this.direction = "right";
     }
 
     moveLeft() {
         if (this.vel.x > -this.maxspeed) {
             this.vel.x -= 1;
         }
+        this.direction = "left"
     }
 
 
@@ -138,8 +147,10 @@ class Player{
 
 
 class GameView{
-    constructor(game, ctx, canvasHeight, canvasWidth){
+    constructor(game, ctx, canvasHeight, canvasWidth, walk, walkLeft){
         this.game = game;
+        this.walkLeft = walkLeft;
+        this.walk = walk;
         this.ctx = ctx;
         this.canvasHeight = canvasHeight;
         this.canvasWidth = canvasWidth;
@@ -153,8 +164,26 @@ class GameView{
     }
 
     drawPlayer(player){
+
         this.ctx.fillStyle = player.color;
-        this.ctx.fillRect(player.pos.x, player.pos.y, 30, 30);
+        this.ctx.fillRect(player.pos.x, player.pos.y, player.width, player.height);
+
+
+
+
+        const scale = 2;
+        const width = 22;
+        const height = 33;
+        const scaledWidth = scale * width;
+        const scaledHeight = scale * height;
+
+
+        if(player.direction === "right"){
+        this.ctx.drawImage(this.walk, 0, 0, width, height, player.pos.x, player.pos.y, scaledWidth, scaledHeight);
+        }else{
+            this.ctx.drawImage(this.walkLeft, 0, 0, width, height, player.pos.x, player.pos.y, scaledWidth, scaledHeight);
+        }
+
     }
 
     drawPlatform(platform){
@@ -239,8 +268,23 @@ class GameView{
 
 }
 
-
 window.addEventListener('DOMContentLoaded', () => {
+    const walkLeft = new Image();
+    walkLeft.src = './sprites/skelly/SkeletonWalkLeft.png';
+    walkLeft.onload = function() {
+      console.log("left")
+    };
+    
+    
+    const walk = new Image();
+    walk.src = './sprites/skelly/SkeletonWalk.png';
+    walk.onload = function() {
+      init();
+      console.log("hey")
+    };
+
+
+
     const canvas = document.getElementById("gameCanvas");
     canvas.width = 800;
     canvas.height = 625;
@@ -250,6 +294,15 @@ window.addEventListener('DOMContentLoaded', () => {
 
     const ctx = canvas.getContext("2d");
 
-    const game = new Game(canvas.height, canvas.width);
-    const gameView = new GameView(game, ctx, canvas.height, canvas.width).start();
+    ctx.webkitImageSmoothingEnabled = false;
+    ctx.mozImageSmoothingEnabled = false;
+    ctx.imageSmoothingEnabled = false;
+
+
+    function init () {
+        const game = new Game(canvas.height, canvas.width);
+        const gameView = new GameView(game, ctx, canvas.height, canvas.width, walk, walkLeft).start();
+    }
 });
+
+
